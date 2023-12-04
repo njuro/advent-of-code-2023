@@ -1,14 +1,30 @@
 import utils.readInputLines
+import kotlin.math.pow
 
 /** [https://adventofcode.com/2023/day/4] */
-class Day4 : AdventOfCodeTask {
+class Cards : AdventOfCodeTask {
     override fun run(part2: Boolean): Any {
-        val input = readInputLines("4.txt")
+        fun String.parseNumbers(): Set<Int> = split(" ").filter(String::isNotBlank).map { it.toInt() }.toSet()
+        val cards = readInputLines("4.txt").associate { line ->
+            val (card, numbers) = line.split(": ")
+            val cardId = card.substringAfter("Card").trim().toInt()
+            val (winning, actual) = numbers.split(" | ")
+            val matchingCount = winning.parseNumbers().intersect(actual.parseNumbers()).size
+            cardId to matchingCount
+        }
+        return if (part2) {
+            val counter = cards.keys.associateWith { 1 }.toMutableMap()
+            cards.forEach { (cardId, matchingCount) ->
+                (cardId + 1..cardId + matchingCount).forEach { nextCardId ->
+                    counter[nextCardId] = counter.getValue(nextCardId) + counter.getValue(cardId)
+                }
+            }
+            counter.values.sum()
+        } else cards.values.filter { it > 0 }.sumOf { 2.0.pow(it - 1) }.toInt()
 
-        return -1
     }
 }
 
 fun main() {
-    print(Day4().run(part2 = false))
+    print(Cards().run(part2 = true))
 }
