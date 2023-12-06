@@ -1,14 +1,25 @@
 import utils.readInputLines
 
 /** [https://adventofcode.com/2023/day/6] */
-class Day6 : AdventOfCodeTask {
+class Races : AdventOfCodeTask {
     override fun run(part2: Boolean): Any {
-        val input = readInputLines("6.txt")
+        val (times, distances) = readInputLines("6.txt").map { line ->
+            line.substringAfter(":").let {
+                if (part2)
+                    listOf(it.replace(" ", "").toLong())
+                else
+                    it.split(" ").filter(String::isNotBlank).map(String::toLong)
+            }
+        }
 
-        return -1
+        return times.zip(distances).map { (time, distance) ->
+            (1..<time).count { holding ->
+                (time - holding) * holding > distance
+            }
+        }.reduce { a, b -> a * b }
     }
 }
 
 fun main() {
-    print(Day6().run(part2 = false))
+    print(Races().run(part2 = true))
 }
