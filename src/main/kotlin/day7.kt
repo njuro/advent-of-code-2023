@@ -1,7 +1,10 @@
 import utils.readInputLines
+import java.util.Comparator.comparing
 
 /** [https://adventofcode.com/2023/day/7] */
 class Ranks : AdventOfCodeTask {
+
+    @OptIn(ExperimentalStdlibApi::class)
     override fun run(part2: Boolean): Any {
         val strengths = mutableListOf('2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A').apply {
             if (part2) {
@@ -10,12 +13,7 @@ class Ranks : AdventOfCodeTask {
             }
         }
 
-        data class Hand(val cards: String, val bid: Int) : Comparable<Hand> {
-            override fun compareTo(other: Hand): Int =
-                getTypeRank().compareTo(other.getTypeRank()).takeIf { it != 0 }
-                    ?: getStrengthRank().zip(other.getStrengthRank())
-                        .firstNotNullOfOrNull { (rank1, rank2) -> rank1.compareTo(rank2).takeIf { it != 0 } } ?: 0
-
+        data class Hand(val cards: String, val bid: Int) {
             fun getTypeRank(): Int =
                 if (part2)
                     strengths.maxOf { card -> getTypeRank(cards.replace('J', card)) }
@@ -35,13 +33,16 @@ class Ranks : AdventOfCodeTask {
                 }
             }
 
-            fun getStrengthRank(): List<Int> = cards.map(strengths::indexOf)
+            fun getStrengthRank(): Int = cards
+                .map { strengths.indexOf(it).plus(1).toHexString().trimStart('0') }
+                .joinToString("").toInt(16)
         }
 
         return readInputLines("7.txt").map {
             val (cards, bid) = it.split(" ")
             Hand(cards, bid.toInt())
-        }.sorted().withIndex().sumOf { (index, hand) -> (index + 1) * hand.bid }
+        }.sortedWith(comparing(Hand::getTypeRank).thenComparing(Hand::getStrengthRank))
+            .withIndex().sumOf { (index, hand) -> (index + 1) * hand.bid }
     }
 }
 
