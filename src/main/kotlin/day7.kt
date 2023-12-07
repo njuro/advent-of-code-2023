@@ -3,27 +3,24 @@ import utils.readInputLines
 /** [https://adventofcode.com/2023/day/7] */
 class Ranks : AdventOfCodeTask {
     override fun run(part2: Boolean): Any {
+        val strengths = mutableListOf('2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A').apply {
+            if (part2) {
+                remove('J')
+                add(0, 'J')
+            }
+        }
 
-        data class Hand(val cards: String) : Comparable<Hand> {
-            private val strengths =
-                mutableListOf('2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A').apply {
-                    if (part2) {
-                        remove('J')
-                        add(0, 'J')
-                    }
-                }
-
+        data class Hand(val cards: String, val bid: Int) : Comparable<Hand> {
             override fun compareTo(other: Hand): Int =
                 getTypeRank().compareTo(other.getTypeRank()).takeIf { it != 0 }
-                    ?: getStrengthRank().zip(other.getStrengthRank()).firstOrNull { it.first != it.second }
-                        ?.let { it.first.compareTo(it.second) } ?: 0
+                    ?: getStrengthRank().zip(other.getStrengthRank())
+                        .firstNotNullOfOrNull { (rank1, rank2) -> rank1.compareTo(rank2).takeIf { it != 0 } } ?: 0
 
             fun getTypeRank(): Int =
                 if (part2)
                     strengths.maxOf { card -> getTypeRank(cards.replace('J', card)) }
                 else
                     getTypeRank(cards)
-
 
             private fun getTypeRank(cards: String): Int {
                 val counts = cards.groupBy { it }.mapValues { it.value.size }.values
@@ -38,13 +35,13 @@ class Ranks : AdventOfCodeTask {
                 }
             }
 
-            fun getStrengthRank(): List<Int> = cards.map { strengths.indexOf(it) }
-
+            fun getStrengthRank(): List<Int> = cards.map(strengths::indexOf)
         }
+
         return readInputLines("7.txt").map {
             val (cards, bid) = it.split(" ")
-            Hand(cards) to bid.toInt()
-        }.sortedBy { it.first }.withIndex().sumOf { (index, value) -> (index + 1) * value.second }
+            Hand(cards, bid.toInt())
+        }.sorted().withIndex().sumOf { (index, hand) -> (index + 1) * hand.bid }
     }
 }
 
